@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+STICKY_HOME="$HOME/.sticky/"
+mkdir -p "$STICKY_HOME"
+
+VALID_CMDS="add rm ls"
+CMD="add"
+for word in $VALID_CMDS; do
+	[[ $word = $1 ]] && CMD="$word" && shift && break
+done
+
+get_highest_numbered_sticky() {
+	ls "$STICKY_HOME" | grep "^[0-9]*$" | sort -n | tail -n 1
+}
+
+case "$CMD" in
+	"add")
+		STICKY_NAME=$(( $(get_highest_numbered_sticky) + 1 ))
+		FILENAME="$STICKY_HOME/$STICKY_NAME"
+		DATE=$(date +"%Y-%m-%d %H%M")
+		DIR=$(pwd)
+		[[ "$DIR" =~  ^"$HOME"(/|$) ]] && DIR="~${DIR#$HOME}"
+		echo "$DATE $DIR" >> "$FILENAME"
+		echo $@           >> "$FILENAME"
+		;;
+
+	"rm")
+		STICKY_NAME="$1"
+		FILENAME="$STICKY_HOME/$STICKY_NAME"
+		rm "$FILENAME"
+		;;
+
+	"ls")
+		ls "$STICKY_HOME" | while read FILE; do
+			echo -n "$FILE. "
+			cat "$STICKY_HOME/$FILE"
+		done
+		;;
+esac
